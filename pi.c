@@ -1,7 +1,7 @@
 /* * Programme de calcul des décimales de PI via l'algorithme de Chudnovsky.
  * Utilise la bibliothèque GMP (assez précis) et Pthreads pour le multithread.
- * Options : -d (nombre de décimales, défaut 1000) et -t (nombre de threads, défaut 1).
- * Version 1.0 - 06/01/2026 - Adrien Linuxtricks 
+ * Options : -d (nombre de décimales, défaut 1000), -t (nombre de threads, défaut 1), -s (afficher stats).
+ * Version 1.1 - 06/01/2026 - Adrien Linuxtricks 
 */
 
 #include <stdio.h>
@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <gmp.h>
 #include <unistd.h>
+#include <time.h>
 
 // Structure pour passer les paramètres à chaque thread
 typedef struct {
@@ -65,10 +66,11 @@ void *compute_partial_sum(void *arg) {
 int main(int argc, char *argv[]) {
     int decimals = 1000; // Par défaut ou repris si opton -d (voir dessous)
     int num_threads = 1; // Par défaut ou repris si opton -t (voir dessous)
+    int show_stats = 0;  // Par défaut pas de stats sauf si actif via opton -s (voir dessous)
     int opt;
 
-    // Analyse des options : -d pour décimales, -t pour threads
-    while ((opt = getopt(argc, argv, "d:t:")) != -1) {
+    // Analyse des options : -d pour décimales, -t pour threads, -s pour stats
+    while ((opt = getopt(argc, argv, "d:t:s")) != -1) {
         switch (opt) {
             case 'd':
                 decimals = atoi(optarg);
@@ -77,8 +79,15 @@ int main(int argc, char *argv[]) {
                 num_threads = atoi(optarg);
                 if (num_threads < 1) num_threads = 1;
                 break;
+            case 's':
+                show_stats = 1;
+                break;
         }
     }
+
+    // Début du chronométrage
+    struct timespec start_time, end_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     // Précision GMP (environ 4 bits par décimale)
     mpf_set_default_prec(decimals * 4);
@@ -117,6 +126,22 @@ int main(int argc, char *argv[]) {
     mpf_div(pi, C, sum);
 
     gmp_printf("%.*Ff\n", decimals, pi);
+
+    // Fin du chronométrage
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+    // Affichage des statistiques si l'option -s est activée mais pas sur stdout si redirection dans fichier ou /dev/null
+    if (show_stats) {
+        double elapsed = (end_time.tv_sec - start_time.tv_sec) + 
+                        (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
+        double decimals_per_second = decimals / elapsed;
+
+        fprintf(stderr, "======= Stats =======\n");
+        fprintf(stderr, "Time      : %.3f s\n", elapsed);
+        fprintf(stderr, "Threads   : %d\n", num_threads);
+        fprintf(stderr, "Decimals  : %d\n", decimals);
+        fprintf(stderr, "Dec / sec : %.0f\n", decimals_per_second);
+    }
 
     // Nettoyage de la mémoire
     mpf_clears(sum, pi, C, sqrt10005, NULL);
