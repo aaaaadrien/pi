@@ -1,13 +1,7 @@
 /* * Programme de calcul des décimales de PI via l'algorithme de Chudnovsky avec Binary Splitting.
  * Utilise la bibliothèque GMP (assez précis) et Pthreads pour le multithread.
- * Options : -d (nombre de décimales, défaut 1000), -t (nombre de threads, défaut 1), -s (afficher stats).
- * Version 2.0 - 06/01/2026 - Adrien Linuxtricks 
-*/
-
-/* * Programme de calcul des décimales de PI via l'algorithme de Chudnovsky avec Binary Splitting.
- * Utilise la bibliothèque GMP (assez précis) et Pthreads pour le multithread.
- * Options : -d (nombre de décimales, défaut 1000), -t (nombre de threads, défaut 1), -s (afficher stats).
- * Version 2.0 - Binary Splitting - 06/01/2026 - Adrien Linuxtricks
+ * Options : -d (nombre de décimales, défaut 1000), -t (nombre de threads, défaut 1), -s (afficher stats), -q (pas afficher la valeur de pi, juste les stats)
+ * Version 2.1 - Binary Splitting - 10/01/2026 - Adrien Linuxtricks
 */
 
 #include <stdio.h>
@@ -115,10 +109,11 @@ int main(int argc, char *argv[]) {
     int decimals = 1000; // Par défaut ou repris si option -d (voir dessous)
     int num_threads = 1; // Par défaut ou repris si option -t (voir dessous)
     int show_stats = 0;  // Par défaut pas de stats sauf si actif via option -s (voir dessous)
+    int quiet_mode = 0;  // Par défaut afficher PI sauf si actif via option -q (voir dessous)
     int opt;
 
-    // Analyse des options : -d pour décimales, -t pour threads, -s pour stats
-    while ((opt = getopt(argc, argv, "d:t:s")) != -1) {
+    // Analyse des options : -d pour décimales, -t pour threads, -s pour stats, -q pour quiet
+    while ((opt = getopt(argc, argv, "d:t:sq")) != -1) {
         switch (opt) {
             case 'd':
                 decimals = atoi(optarg);
@@ -129,6 +124,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 's':
                 show_stats = 1;
+                break;
+            case 'q':
+                quiet_mode = 1;
                 break;
         }
     }
@@ -164,7 +162,9 @@ int main(int argc, char *argv[]) {
         mpf_mul(pi, sqrt_C, fQ);
         mpf_div(pi, pi, fT);
         
-        gmp_printf("%.*Ff\n", decimals, pi);
+        if (!quiet_mode) {
+            gmp_printf("%.*Ff\n", decimals, pi);
+        }
         
         // Libération de la mémoire
         mpz_clears(result.P, result.Q, result.T, NULL);
@@ -227,7 +227,9 @@ int main(int argc, char *argv[]) {
         mpf_mul(pi, sqrt_C, fQ);
         mpf_div(pi, pi, fT);
         
-        gmp_printf("%.*Ff\n", decimals, pi);
+        if (!quiet_mode) {
+            gmp_printf("%.*Ff\n", decimals, pi);
+        }
         
         // Nettoyage de la mémoire
         mpz_clears(final.P, final.Q, final.T, NULL);
