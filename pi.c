@@ -1,7 +1,16 @@
-/* * Programme de calcul des décimales de PI via l'algorithme de Chudnovsky avec Binary Splitting.
- * Utilise la bibliothèque GMP (assez précis) et Pthreads pour le multithread.
- * Options : -d (nombre de décimales, défaut 1000), -t (nombre de threads, défaut 1), -s (afficher stats), -q (pas afficher la valeur de pi, juste les stats)
- * Version 2.1 - Binary Splitting - 10/01/2026 - Adrien Linuxtricks
+/* * Programme de calcul des décimales de PI via l'algorithme de Chudnovsky.
+ * Utilise la bibliothèque GMP (assez précis) et Pthreads pour le multithread ainsi que Binary Splitting.
+ * Options : 
+ * -d (nombre de décimales, défaut 1000)
+ * -t (nombre de threads, défaut 1)
+ * -s (afficher stats)
+ * -q (pas afficher la valeur de pi, juste les stats)
+ * -h (aide)
+ * Version 1.0 - 06/01/2026 - Adrien Linuxtricks 
+ * Version 1.1 - 06/01/2026 - Adrien Linuxtricks - Ajout stats
+ * Version 2.0 - 10/01/2026 - Adrien Linuxtricks - Binary Splitting pour meilleurs perfs
+ * Version 2.1 - 10/01/2026 - Adrien Linuxtricks - Ajout d'un mode quiet (ne pas afficher pi pour benchmarks par exemple)
+ * Version 2.2 - 10/01/2026 - Adrien Linuxtricks - Ajout d'une aide
 */
 
 #include <stdio.h>
@@ -23,6 +32,23 @@ typedef struct {
     pqt_t result;       // Résultat P, Q, T pour cet intervalle
     int thread_id;      // Identifiant du thread
 } bs_data_t;
+
+// Affichage de l'aide
+void print_help(const char *prog_name) {
+    printf("Usage: %s [OPTIONS]\n\n", prog_name);
+    printf("Calcul des décimales de PI via l'algorithme de Chudnovsky.\n\n");
+    printf("OPTIONS:\n");
+    printf("  -d NUM     Nombre de décimales à calculer (défaut: 1000)\n");
+    printf("  -t NUM     Nombre de threads à utiliser (défaut: 1)\n");
+    printf("  -s         Afficher les statistiques d'exécution (sur stderr)\n");
+    printf("  -q         Mode silencieux (n'affiche pas la valeur de PI)\n");
+    printf("  -h         Afficher cette aide et quitter\n\n");
+    printf("EXEMPLES:\n");
+    printf("  %s -d 5000                  Calculer 5000 décimales\n", prog_name);
+    printf("  %s -d 10000 -t 4            Calculer 10000 décimales avec 4 threads\n", prog_name);
+    printf("  %s -d 1000 -s               Afficher les statistiques\n", prog_name);
+    printf("  %s -d 50000 -t 8 -s -q      Mode silencieux avec stats\n\n", prog_name);
+}
 
 // Fonction de binary splitting récursive pour calculer la série de Chudnovsky
 // Cette méthode évite de recalculer les factorielles à chaque itération
@@ -112,8 +138,8 @@ int main(int argc, char *argv[]) {
     int quiet_mode = 0;  // Par défaut afficher PI sauf si actif via option -q (voir dessous)
     int opt;
 
-    // Analyse des options : -d pour décimales, -t pour threads, -s pour stats, -q pour quiet
-    while ((opt = getopt(argc, argv, "d:t:sq")) != -1) {
+    // Analyse des options : -d pour décimales, -t pour threads, -s pour stats, -q pour quiet, -h pour aide
+    while ((opt = getopt(argc, argv, "d:t:sqh")) != -1) {
         switch (opt) {
             case 'd':
                 decimals = atoi(optarg);
@@ -128,6 +154,12 @@ int main(int argc, char *argv[]) {
             case 'q':
                 quiet_mode = 1;
                 break;
+            case 'h':
+                print_help(argv[0]);
+                return 0;
+            default:
+                print_help(argv[0]);
+                return 1;
         }
     }
 

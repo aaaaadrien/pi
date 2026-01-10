@@ -13,5 +13,5 @@ gcc -O3 -o pi pi.c -lgmp -lpthread -lm
 
 ## Usage
 ```
-pi [-d decimals] [-t threads]
+pi [-d decimals] [-t threads] [-s] [-q]
 ```
