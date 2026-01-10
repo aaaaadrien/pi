@@ -8,7 +8,7 @@ dnf install gmp-devel
 
 ## Compilation
 ```
-gcc pi.c -o pi -lgmp -lpthread
+gcc -O3 -o pi pi.c -lgmp -lpthread -lm
 ```
 
 ## Usage
